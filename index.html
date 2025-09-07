@@ -5,44 +5,113 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fun Get-to-Know Game</title>
 <style>
-  body {
-    font-family: sans-serif;
-    background: linear-gradient(to bottom right, #fff9c4, #f48fb1);
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap');
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Baloo 2', cursive;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    overflow: hidden;
   }
+
+  body {
+    background: linear-gradient(270deg, #ffecd2, #fcb69f, #ff9a9e, #fad0c4);
+    background-size: 800% 800%;
+    animation: gradientBG 20s ease infinite;
+  }
+
+  @keyframes gradientBG {
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
+  }
+
   .container {
-    text-align: center;
-    background: white;
+    background: rgba(255,255,255,0.95);
     padding: 2rem;
     border-radius: 2rem;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 480px;
     width: 90%;
+    text-align: center;
+    position: relative;
   }
-  h1 { font-size: 2rem; margin-bottom: 1rem; }
-  h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-  p { margin-bottom: 1.5rem; font-size: 1.1rem; }
-  input { padding: 0.5rem; font-size: 1rem; border-radius: 0.5rem; width: 80%; margin-bottom: 1rem; }
+
+  h1, h2 {
+    margin-bottom: 1rem;
+  }
+
+  p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  input {
+    padding: 0.6rem;
+    font-size: 1rem;
+    border-radius: 0.6rem;
+    border: 2px solid #f06292;
+    width: 80%;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
   button {
     padding: 0.7rem 1.5rem;
-    border-radius: 1rem;
+    border-radius: 1.2rem;
     border: none;
     background: #f06292;
     color: white;
     font-weight: bold;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background 0.2s;
   }
-  button:hover { transform: scale(1.05); }
+
+  button:hover {
+    transform: scale(1.05);
+    background: #ec407a;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: gold;
+    animation: fly 1s linear forwards;
+  }
+
+  @keyframes fly {
+    0% {opacity:1; transform: translateY(0) rotate(0deg);}
+    100% {opacity:0; transform: translateY(-200px) rotate(360deg);}
+  }
+
+  .notification {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff9a9e;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-weight: bold;
+    opacity: 0;
+    animation: fadeInOut 3s forwards;
+  }
+
+  @keyframes fadeInOut {
+    0% {opacity:0; transform: translate(-50%, -50px);}
+    10% {opacity:1; transform: translate(-50%, 0);}
+    90% {opacity:1; transform: translate(-50%, 0);}
+    100% {opacity:0; transform: translate(-50%, -50px);}
+  }
 </style>
 </head>
 <body>
-
 <div class="container" id="gameContainer">
   <h1>🌸 Vanakkam! 🌸</h1>
   <p>Enter your nickname to start this fun little journey 💫</p>
@@ -52,10 +121,8 @@
 </div>
 
 <script>
-// Google Sheets Web App URL
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydMj3ivnXsozEj9nOpfHdHAQ9Ob5Dw0ayW3CIZKsnSQKuyBW_TQsZmPThG2uwupdCR/exec";
 
-// Layers & Questions
 const layers = [
   {
     name: "Fun & Warm",
@@ -113,7 +180,7 @@ let nickname = "";
 
 function startGame() {
   nickname = document.getElementById("nickname").value.trim();
-  if (!nickname) { alert("Please enter a nickname!"); return; }
+  if(!nickname) { alert("Please enter a nickname!"); return; }
   showQuestion();
 }
 
@@ -127,56 +194,68 @@ function sendResponse(layer, question, response) {
       question,
       response
     })
-  }).catch(err => console.log(err));
+  }).catch(err=>console.log(err));
+}
+
+function createConfetti() {
+  const container = document.getElementById('gameContainer');
+  for(let i=0;i<15;i++){
+    const c = document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*90+'%';
+    c.style.background=['#fdd835','#fbc02d','#ffb74d','#ff8a65'][Math.floor(Math.random()*4)];
+    container.appendChild(c);
+    setTimeout(()=>{container.removeChild(c)},1000);
+  }
+}
+
+function showNotification(msg){
+  const container = document.getElementById('gameContainer');
+  const note = document.createElement('div');
+  note.className='notification';
+  note.textContent = msg;
+  container.appendChild(note);
+  setTimeout(()=>{container.removeChild(note)},3000);
 }
 
 function showQuestion() {
-  if (layerIndex >= layers.length) {
-    showOutro();
-    return;
-  }
-  const container = document.getElementById("gameContainer");
-  const currentLayer = layers[layerIndex];
-  const currentQuestion = currentLayer.questions[qIndex];
-  
-  const answer = prompt(`${currentLayer.name}\n\n${currentQuestion}`, "");
-  if (answer !== null) {
-    sendResponse(currentLayer.name, currentQuestion, answer);
-  }
+  const container = document.getElementById('gameContainer');
+  container.innerHTML = `<h2>${layers[layerIndex].name}</h2>
+                         <p>${layers[layerIndex].questions[qIndex]}</p>
+                         <input type="text" id="answerInput" placeholder="Your answer"/>
+                         <br/>
+                         <button id="submitBtn">Submit ✅</button>`;
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.onclick = () => {
+    const answer = document.getElementById('answerInput').value.trim();
+    if(answer===''){ alert("Please enter an answer!"); return; }
+    sendResponse(layers[layerIndex].name, layers[layerIndex].questions[qIndex], answer);
+    createConfetti();
 
-  // Move to next question/layer
-  if (qIndex + 1 < currentLayer.questions.length) {
-    qIndex++;
-  } else {
-    qIndex = 0;
-    layerIndex++;
+    // Advance question/layer
+    if(qIndex+1 < layers[layerIndex].questions.length) {
+      qIndex++;
+      setTimeout(showQuestion,800);
+    } else if(layerIndex+1 < layers.length){
+      layerIndex++;
+      qIndex=0;
+      showNotification("🎉 You're now getting dangerously close… 😉");
+      setTimeout(showQuestion,1500);
+    } else {
+      showOutro();
+    }
   }
-
-  showQuestion(); // recursive call until all layers done
 }
 
-function showOutro() {
-  const container = document.getElementById("gameContainer");
-  container.innerHTML = `
-    <h2>🎉 You did it! 🎉</h2>
-    <p>Thanks for playing. Your answers have been saved! Hope this gave you smiles, thoughts, and maybe a few heartbeats 💕</p>
-    <button onclick="restartGame()">Play Again 🔄</button>
-  `;
+function showOutro(){
+  const container = document.getElementById('gameContainer');
+  container.innerHTML = `<h2>🎉 You did it! 🎉</h2>
+                         <p>Thanks for playing. Your answers have been saved! Hope this gave you smiles, thoughts, and maybe a few heartbeats 💕</p>
+                         <button onclick="restartGame()">Play Again 🔄</button>`;
 }
 
-function restartGame() {
-  layerIndex = 0;
-  qIndex = 0;
-  nickname = "";
-  const container = document.getElementById("gameContainer");
-  container.innerHTML = `
-    <h1>🌸 Vanakkam! 🌸</h1>
-    <p>Enter your nickname to start this fun little journey 💫</p>
-    <input type="text" id="nickname" placeholder="Your nickname"/>
-    <br/>
-    <button onclick="startGame()">Start 🚀</button>
-  `;
-}
-</script>
-</body>
-</html>
+function restartGame(){
+  layerIndex=0; qIndex=0; nickname="";
+  const container = document.getElementById('gameContainer');
+  container.innerHTML = `<h1>🌸 Vanakkam! 🌸</h1>
+                         <p>
